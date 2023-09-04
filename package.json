@@ -6,8 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "ts-node index.ts",
-    "dev": "nodemon --exec node --loader ts-node/esm index.ts",
-    "postinstall": "prisma generate"
+    "dev": "nodemon --exec node --loader ts-node/esm index.ts"
   },
   "dependencies": {
     "@prisma/client": "5.2.0",
