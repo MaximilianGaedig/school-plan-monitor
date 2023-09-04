@@ -172,3 +172,10 @@ const checkForNewPlan = async () => {
 checkForNewPlan();
 
 setInterval(checkForNewPlan, 1000 * 60 * 20); // 20 minutes
+
+
+// keep alive
+setInterval(async () => {
+  await fetch('https://school-plan-monitor.onrender.com/');
+}, 1000 * 60 * 5); // 5 minutes
+
