@@ -7,6 +7,7 @@ import { createHash } from 'crypto';
 import { Stream } from 'stream';
 import { writeFile } from 'fs/promises';
 import http from 'http';
+
 const planUrl = 'https://zs1-swarzedz.pl/wp-content/uploads/2022/01/Technikum_plan1.pdf';
 const planPage = 29;
 
@@ -208,7 +209,7 @@ const checkForNewPlan = async () => {
     const boundChats = await prisma.boundChat.findMany();
 
     for (const boundChat of boundChats) {
-      sendPdfAndImage(boundChat.chatId, Buffer.from(await planPdf.save()), image.buffer, 'Nowy plan lekcji');
+      sendPdfAndImage(Number(boundChat.chatId), Buffer.from(await planPdf.save()), image.buffer, 'Nowy plan lekcji');
     }
   } catch (e) {
     console.error(e);

@@ -8,8 +8,8 @@ datasource db {
 }
 
 model BoundChat {
-  chatId    Int      @id
-  userId    Int?
+  chatId    BigInt   @id
+  userId    BigInt?
   createdAt DateTime @default(now())
 }
 
