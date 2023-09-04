@@ -15,13 +15,16 @@ const prisma = new PrismaClient();
 if (!process.env.DATABASE_URL) {
   throw new Error('No DATABASE_URL');
 }
+
+if (!process.env.TELEGRAM_TOKEN) {
+  throw new Error('No TELEGRAM_TOKEN');
+}
+
 console.log('Connecting to', process.env.DATABASE_URL);
 
 
-const token = '5838274386:AAFRxEeRA6YW3Vttbemoax1dPxNteEIOaJ8';
-
 // Create a bot that uses 'polling' to fetch new updates
-const bot = new TelegramBot(token, { polling: true });
+const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
 
 const sendPdfAndImage = async (chatId: number, plan: string | Buffer | Stream, image: string | Buffer | Stream, caption: string) => {
   await bot.sendDocument(chatId, plan, {
@@ -163,6 +166,7 @@ const checkForNewPlan = async () => {
     });
 
     const image = await convert(planPage, { responseType: "buffer" });
+    console.log('image', JSON.stringify(image).slice(0, 100));
 
     if (!image.buffer) {
       console.error('no image');
@@ -190,11 +194,9 @@ const checkForNewPlan = async () => {
 
 checkForNewPlan();
 
-setInterval(checkForNewPlan, 1000 * 60 * 20); // 20 minutes
-
+setInterval(checkForNewPlan, 1000 * 60 * 10); // 10 minutes
 
 // keep alive
-
 http.createServer((_, res) => {
   res.writeHead(200, { 'Content-Type': 'text/plain' });
   res.write('OK');
@@ -202,5 +204,6 @@ http.createServer((_, res) => {
 }).listen(3000);
 
 setInterval(async () => {
+  console.log('Pinging');
   await fetch('https://school-plan-monitor.onrender.com/');
-}, 1000 * 60 * 5); // 5 minutes
+}, 1000 * 60 * 2); // 2 minutes
