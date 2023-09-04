@@ -27,10 +27,11 @@ console.log('Connecting to', process.env.DATABASE_URL);
 // Create a bot that uses 'polling' to fetch new updates
 const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
 
-const sendPdfAndImage = async (chatId: number, plan: string | Buffer | Stream, image: string | Buffer | Stream, caption: string) => {
+const sendPdfAndImage = async (chatId: string, plan: string | Buffer | Stream, image: string | Buffer | Stream, caption: string) => {
   await bot.sendDocument(chatId, plan, {
     caption,
   }, { filename: 'plan' });
+
   await bot.sendPhoto(chatId, image, {
     caption,
   }, { filename: 'plan' });
@@ -39,7 +40,7 @@ const sendPdfAndImage = async (chatId: number, plan: string | Buffer | Stream, i
 const bindChat = async (chatId: number, fromId: number) => {
   const dbChat = await prisma.boundChat.findFirst({
     where: {
-      chatId,
+      chatId: chatId.toString(),
     },
   });
 
@@ -51,8 +52,8 @@ const bindChat = async (chatId: number, fromId: number) => {
 
   await prisma.boundChat.create({
     data: {
-      chatId,
-      userId: fromId,
+      chatId: chatId.toString(),
+      userId: fromId.toString(),
     },
   });
 
@@ -68,7 +69,7 @@ bot.on('my_chat_member', async (msg) => {
     } else if (msg.new_chat_member.status === 'left') {
       await prisma.boundChat.delete({
         where: {
-          chatId,
+          chatId: chatId.toString(),
         },
       });
     } else {
@@ -107,7 +108,7 @@ bot.onText(/\/plan/, async (msg) => {
 
     const dbChat = await prisma.boundChat.findFirst({
       where: {
-        chatId,
+        chatId: chatId.toString(),
       },
     });
 
@@ -131,7 +132,7 @@ bot.onText(/\/plan/, async (msg) => {
       bot.sendMessage(chatId, `No plan image`);
       return;
     }
-    await sendPdfAndImage(chatId, plan.file, plan.image, 'Plan lekcji');
+    await sendPdfAndImage(chatId.toString(), plan.file, plan.image, 'Plan lekcji');
   } catch (e) {
     console.error(e);
   }
@@ -209,7 +210,7 @@ const checkForNewPlan = async () => {
     const boundChats = await prisma.boundChat.findMany();
 
     for (const boundChat of boundChats) {
-      sendPdfAndImage(Number(boundChat.chatId), Buffer.from(await planPdf.save()), image.buffer, 'Nowy plan lekcji');
+      sendPdfAndImage(boundChat.chatId, Buffer.from(await planPdf.save()), image.buffer, 'Nowy plan lekcji');
     }
   } catch (e) {
     console.error(e);
