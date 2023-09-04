@@ -10,4 +10,5 @@ COPY prisma ./prisma
 RUN pnpm prisma generate
 
 COPY . . 
+EXPOSE 3000
 CMD [ "npm", "run", "start" ]

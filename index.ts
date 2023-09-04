@@ -6,6 +6,7 @@ import { fromBuffer } from "pdf2pic";
 import { createHash } from 'crypto';
 import { Stream } from 'stream';
 import { writeFile } from 'fs/promises';
+import http from 'http';
 const planUrl = 'https://zs1-swarzedz.pl/wp-content/uploads/2022/01/Technikum_plan1.pdf';
 const planPage = 29;
 
@@ -193,6 +194,13 @@ setInterval(checkForNewPlan, 1000 * 60 * 20); // 20 minutes
 
 
 // keep alive
+
+http.createServer((_, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.write('OK');
+  res.end();
+}).listen(3000);
+
 setInterval(async () => {
   await fetch('https://school-plan-monitor.onrender.com/');
 }, 1000 * 60 * 5); // 5 minutes
