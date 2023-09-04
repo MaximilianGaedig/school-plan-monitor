@@ -8,11 +8,9 @@ datasource db {
 }
 
 model BoundChat {
-  id     Int @id @default(autoincrement())
-  chatId Int
-  userId Int
-
-  @@unique([chatId, userId])
+  chatId    Int      @id
+  userId    Int?
+  createdAt DateTime @default(now())
 }
 
 model Plan {

@@ -35,41 +35,66 @@ const sendPdfAndImage = async (chatId: number, plan: string | Buffer | Stream, i
   }, { filename: 'plan' });
 };
 
-bot.onText(/\/start/, (msg) => {
-  const chatId = msg.chat.id;
-  bot.sendMessage(chatId, 'Welcome');
+const bindChat = async (chatId: number, fromId: number) => {
+  const dbChat = await prisma.boundChat.findFirst({
+    where: {
+      chatId,
+    },
+  });
+
+
+  if (dbChat) {
+    bot.sendMessage(chatId, `Already bound to ${chatId} by ${dbChat.userId}`);
+    return;
+  }
+
+  await prisma.boundChat.create({
+    data: {
+      chatId,
+      userId: fromId,
+    },
+  });
+
+  bot.sendMessage(chatId, `Bound to ${chatId}`);
+};
+
+bot.on('my_chat_member', async (msg) => {
+  try {
+    const chatId = msg.chat.id;
+
+    if (msg.new_chat_member.status === 'member') {
+      await bindChat(chatId, msg.from.id);
+    } else if (msg.new_chat_member.status === 'left') {
+      await prisma.boundChat.delete({
+        where: {
+          chatId,
+        },
+      });
+    } else {
+      console.log('Unknown status', msg.new_chat_member.status);
+    }
+
+  } catch (e) {
+    console.error(e);
+  }
 });
 
 // Matches "/echo [whatever]"
 bot.onText(/\/bind/, async (msg) => {
   try {
     const chatId = msg.chat.id;
-
-    const dbChat = await prisma.boundChat.findFirst({
-      where: {
-        chatId,
-      },
-    });
-
-
-    if (dbChat) {
-      bot.sendMessage(chatId, `Already bound to ${chatId} by ${dbChat.userId}`);
+    if (msg.chat.type !== 'private') {
+      bot.sendMessage(chatId, 'Please send this command in private chat');
       return;
     }
 
-    if (!msg.from) {
-      console.error('no from');
+    if (!msg.from?.id) {
+      bot.sendMessage(chatId, 'No from id');
+      console.log('No from id');
       return;
     }
 
-    await prisma.boundChat.create({
-      data: {
-        chatId,
-        userId: msg.from.id,
-      },
-    });
-
-    bot.sendMessage(chatId, `Bound to ${chatId}`);
+    await bindChat(chatId, msg.from.id);
   } catch (e) {
     console.error(e);
   }
@@ -86,7 +111,7 @@ bot.onText(/\/plan/, async (msg) => {
     });
 
     if (!dbChat) {
-      bot.sendMessage(chatId, `Not bound to ${chatId}`);
+      bot.sendMessage(chatId, `Not bound to ${chatId}, use \`/bind\` in pm to bind`);
       return;
     }
 
@@ -110,8 +135,6 @@ bot.onText(/\/plan/, async (msg) => {
     console.error(e);
   }
 });
-
-
 
 // periodically check for new plan
 // if new plan, send message to all bound chats
